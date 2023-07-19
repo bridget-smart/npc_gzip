@@ -7,7 +7,8 @@ import lzma
 import sys
 from tqdm import tqdm
 import torch.nn.functional as F
-
+from ProcessEntropy.SelfEntropy import text_array_self_entropy
+# from ProcessEntropy.Preprocessing import tweet_to_hash_array
 
 import io
 
@@ -17,6 +18,8 @@ class DefaultCompressor:
     def __init__(self, compressor, typ='text'):
         if compressor == 'gzip':
             self.compressor = gzip
+        elif compressor == 'crossentropy':
+            self.compressor = "crossentropy"
         elif compressor == 'bz2':
             self.compressor = bz2
         elif compressor == 'lzma':
@@ -25,6 +28,10 @@ class DefaultCompressor:
             raise RuntimeError("Unsupported compressor")
         self.type = typ
     def get_compressed_len(self, x):
+        if self.compressor == "crossentropy":
+            # calc cross entropy compression rate
+            # note its different bc bits per word!!
+            return text_array_self_entropy(x)*len(x)
         if self.type == 'text':
             return len(self.compressor.compress(x.encode('utf-8')))
         else:
